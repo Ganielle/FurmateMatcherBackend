@@ -20,7 +20,8 @@ const userModels = new mongoose.Schema(
             minlength: 5
         },
         activated: {
-            type: Boolean
+            type: Boolean,
+            default: false
         }
     },
     {
