@@ -6,6 +6,9 @@ const userDetailsModels = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users"
         },
+        email: {
+            type: String
+        },
         firstname: {
             type: String,
         },
