@@ -4,7 +4,7 @@ const Users = require("../models/User")
 exports.emailvalidate = (req, res) => {
     const { id } = req.body
 
-    EmailValidation.findById(id)
+    EmailValidation.findOne({token: id})
     .populate({
         path: "owner",
         select: "activated"
@@ -14,9 +14,9 @@ exports.emailvalidate = (req, res) => {
             return res.json({message: "failed", data: "You already activated your email. You can now login."})
         }
 
-        await EmailValidation.findByIdAndUpdate(id, { activated: true})
+        await EmailValidation.findOneAndUpdate({token: id}, { activated: true})
         .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
-
+ 
         await Users.findByIdAndUpdate(email.owner._id, {activated: true})
         .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
 
