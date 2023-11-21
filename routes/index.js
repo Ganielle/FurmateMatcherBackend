@@ -5,6 +5,8 @@ const routes = app => {
     app.use("/user", require('./user'))
     app.use("/migrate", require('./migrate'))
     app.use("/emailverification", require("./emailvalidation"))
+    app.use("/uploads", require('./picture'))
+    app.use("/pets", require('./pets'))
 }
 
 module.exports = routes

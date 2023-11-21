@@ -11,7 +11,7 @@ const smtpTransport = require('nodemailer-smtp-transport');
 const { default: mongoose } = require("mongoose")
 
 exports.createuser = (req, res) => {
-    const { username, password, email, firstname, middlename, lastname, gender, dob, street, municipality, province, country, zipcode, location, typeofhome, aloneothers, ownershipstatus, breedowned, petshave, located, typepet, genderpet, agepet, specialdogs, breedpet, personalitytraits, petmaintenance } = req.body
+    const { username, password, email, contactnumber, firstname, middlename, lastname, gender, dob, street, municipality, province, country, zipcode, location, typeofhome, aloneothers, ownershipstatus, breedowned, petshave, located, typepet, genderpet, agepet, specialdogs, breedpet, personalitytraits, petmaintenance } = req.body
 
     UserDetails.findOne({$or: [{firstname: firstname, middlename: middlename, lastname: lastname}, {email: email}]})
     .then(userdeets => {
@@ -24,7 +24,7 @@ exports.createuser = (req, res) => {
                 if (!data){
                     Users.create({ roleId: process.env.USER_ROLE_ID, username: username, password: password})
                     .then(user => {
-                        UserDetails.create({user: user._id, firstname: firstname, lastname: lastname, gender: gender, dob: dob, street: street, municipality: municipality, province: province, country: country, zipcode: zipcode, email: email})
+                        UserDetails.create({user: user._id, firstname: firstname, lastname: lastname, gender: gender, dob: dob, street: street, municipality: municipality, province: province, country: country, zipcode: zipcode, email: email, contactnumber: contactnumber})
                         .then(async userdetails => {
 
                             await UserPreference.create({
@@ -181,6 +181,46 @@ exports.createrescuer = (req, res) => {
         else{
             return res.json({ message: "failed", data: "User already exist"}) 
         }
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
+}
+
+exports.uploadprofilepicture = (req, res) => {
+    const { id } = req.body
+
+    let content = {
+        profilepic: ""
+    }
+
+    if (req.file){
+        content.profilepic = req.file.path
+    }
+    else{
+        return res.json({message: "failed", data: "Please select an image first!"})
+    }
+
+    UserDetails.findOneAndUpdate({user: new mongoose.Types.ObjectId(id)}, content)
+    .then(() => res.json({message: "success"}))
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
+}
+
+exports.userprofile = (req, res) => {
+    const { id } = req.query
+
+    UserPreference.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .populate({
+        path: "userdetails"
+    })
+    .then(data => {
+
+        PetPreference.findOne({owner: new mongoose.Types.ObjectId(id)})
+        .then(petdata => {
+            let userprofiledata = {
+                petdata: petdata,
+                preference: data
+            }
+            res.json({message: "success", data: userprofiledata})
+        })
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
 }

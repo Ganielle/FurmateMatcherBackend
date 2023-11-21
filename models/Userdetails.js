@@ -9,6 +9,9 @@ const userDetailsModels = new mongoose.Schema(
         email: {
             type: String
         },
+        contactnumber: {
+            type: String
+        },
         firstname: {
             type: String,
         },
@@ -38,6 +41,10 @@ const userDetailsModels = new mongoose.Schema(
         },
         zipcode: {
             type: String
+        },
+        profilepic: {
+            type: String,
+            default: ""
         }
     },
     {
