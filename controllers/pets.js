@@ -233,27 +233,38 @@ exports.petdetails = async (req,res) => {
             }
         },
         {
-          $unwind: '$requestadopt' // Unwind the array to access individual petadoptionrequest documents
-        },
-        {
             $group: {
               _id: '$_id',
               pendingCount: {
                 $sum: {
-                  $cond: [
-                    { $and: [{ $eq: ['$requestadopt.status', 'pending'] }, { $eq: ['$requestadopt.requester', new mongoose.Types.ObjectId(userid)] }] },
-                    1,
-                    0
-                  ]
+                  $size: {
+                    $filter: {
+                      input: '$requestadopt',
+                      as: 'request',
+                      cond: {
+                        $and: [
+                          { $eq: ['$$request.status', 'pending'] },
+                          { $eq: ['$$request.requester', new mongoose.Types.ObjectId(userid)] }
+                        ]
+                      }
+                    }
+                  }
                 }
               },
               successCount: {
                 $sum: {
-                  $cond: [
-                    { $and: [{ $eq: ['$requestadopt.status', 'success'] }, { $eq: ['$requestadopt.requester', new mongoose.Types.ObjectId(userid)] }] },
-                    1,
-                    0
-                  ]
+                  $size: {
+                    $filter: {
+                      input: '$requestadopt',
+                      as: 'request',
+                      cond: {
+                        $and: [
+                          { $eq: ['$$request.status', 'success'] },
+                          { $eq: ['$$request.requester', new mongoose.Types.ObjectId(userid)] }
+                        ]
+                      }
+                    }
+                  }
                 }
               },
               data: { $first: '$$ROOT' }
@@ -276,6 +287,7 @@ exports.petdetails = async (req,res) => {
                 special: '$data.special',
                 type: '$data.type',
                 userDetails: '$data.userDetails',
+                adopterDetails: '$data.adopterDetails',
                 // Add other fields as needed
                 hasPendingRequests: { $gt: ['$pendingCount', 0] },
                 hasSuccessRequests: { $gt: ['$successCount', 0] }
@@ -324,10 +336,21 @@ exports.adoptpetlist = (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "requester",
+                foreignField: "_id",
+                as: "adopteruserdetails"
+            }
+        },
+        {
             $unwind: "$adopterdetails"
         },
         {
             $unwind: "$petdata"
+        },
+        {
+            $unwind: "$adopteruserdetails"
         },
         {
             $match: {
@@ -356,15 +379,60 @@ exports.adoptpetlist = (req, res) => {
 }
 
 exports.approverejectadopter = (req, res) => {
-    const { userid, status } = req.body
-
-    PetAdoptionRequest.findOneAndUpdate({requester: new mongoose.Types.ObjectId(userid)}, {status: status})
+    const { userid, status, petid } = req.body
+    console.log(userid)
+    PetAdoptionRequest.findOneAndUpdate({requester: new mongoose.Types.ObjectId(userid), pet: new mongoose.Types.ObjectId(petid)}, {status: status})
     .then(data => {
-        Pets.findOneAndUpdate({_id: new mongoose.Types.ObjectId(data.pet)}, {adoptedby: new mongoose.Types.ObjectId(userid)})
+        Pets.findOneAndUpdate({_id: new mongoose.Types.ObjectId(petid)}, {adoptedby: new mongoose.Types.ObjectId(userid)})
         .then(() => {
             return res.json({message: "success"})
         })
         .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}
+
+exports.deletepet = async (req, res) => {
+    const { petid } = req.body
+
+    await Pets.findOneAndDelete({_id: petid})
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+
+    await LikePets.deleteMany({pet: petid})
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+
+    await PetAdoptionRequest.deleteMany({pet: petid})
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+
+    return res.json({message: "success"})
+}
+
+exports.updatepet = async(req, res) => {
+    const { petid ,userid, petname, type, gender, breed, age, personality, special, maintenance, located, description } = req.body
+
+    let picture = ""
+
+    const dataupdate = {
+        petname: petname,
+        type: type,
+        gender: gender,
+        breed: breed,
+        age: age,
+        personality: personality,
+        special: special,
+        maintenance: maintenance,
+        located: located,
+        description: description
+    }
+
+    if (req.file){
+        picture = req.file.path
+        dataupdate["picture"] = picture
+    }
+
+    Pets.findOneAndUpdate({_id: userid, owner: petid}, dataupdate)
+    .then(data => {
+        return res.json({message: "success"})
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
 }
