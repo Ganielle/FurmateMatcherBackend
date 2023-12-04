@@ -411,14 +411,14 @@ exports.updatepet = async(req, res) => {
     const { petid ,userid, petname, type, gender, breed, age, personality, special, maintenance, located, description } = req.body
 
     let picture = ""
-
+    const personalitydata = JSON.parse(personality)
     const dataupdate = {
         "name": petname,
         "type": type,
         "gender": gender,
         "breed": breed,
         "age": age,
-        "personalitytraits": personality,
+        "personalitytraits": personalitydata,
         "special": special,
         "maintenance": maintenance,
         "located": located,
