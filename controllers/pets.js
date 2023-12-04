@@ -218,6 +218,14 @@ exports.petdetails = async (req,res) => {
         },
         {
             $lookup: {
+                from: "userdetails",
+                localField: "user",
+                foreignField: 'adoptedby',
+                as: 'adopterDetails'
+            }
+        },
+        {
+            $lookup: {
                 from: "users",
                 localField: "ownerDetails.owner",
                 foreignField: "_id",
