@@ -3,6 +3,7 @@ const PetPreference = require("../models/Petpreference")
 const LikePets = require("../models/Likepets")
 const RescuerDetails = require("../models/Rescuerdetails")
 const UserDetails = require("../models/Userdetails")
+const PetAdoptionRequest = require("../models/Petadoptionrequest")
 const { default: mongoose } = require("mongoose")
 
 exports.createpets = (req, res) => {
@@ -191,12 +192,20 @@ exports.likepetlist = async(req, res) => {
 }
 
 exports.petdetails = async (req,res) => {
-    const { petid } = req.query
+    const { petid, userid } = req.query
 
     Pets.aggregate([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(petid)
+            }
+        },
+        {
+            $lookup: {
+                from: "petadoptionrequests",
+                localField: "_id",
+                foreignField: "pet",
+                as: "requestadopt"
             }
         },
         {
@@ -214,10 +223,70 @@ exports.petdetails = async (req,res) => {
                 foreignField: "_id",
                 as: "userDetails"
             }
-        }
+        },
+        {
+          $unwind: '$requestadopt' // Unwind the array to access individual petadoptionrequest documents
+        },
+        {
+            $group: {
+              _id: '$_id',
+              pendingCount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ['$requestadopt.status', 'pending'] }, { $eq: ['$requestadopt.requester', new mongoose.Types.ObjectId(userid)] }] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              successCount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ['$requestadopt.status', 'success'] }, { $eq: ['$requestadopt.requester', new mongoose.Types.ObjectId(userid)] }] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              data: { $first: '$$ROOT' }
+            }
+          },
+          {
+            $project: {
+                _id: '$data._id',
+                owner: '$data.owner',
+                breed: '$data.breed',
+                createdAt: '$data.createdAt',
+                description: '$data.description',
+                gender: '$data.gender',
+                located: '$data.located',
+                maintenance: '$data.maintenance',
+                name: '$data.name',
+                ownerDetails: '$data.ownerDetails',
+                personalitytraits: '$data.personalitytraits',
+                picture: '$data.picture',
+                special: '$data.special',
+                type: '$data.type',
+                userDetails: '$data.userDetails',
+                // Add other fields as needed
+                hasPendingRequests: { $gt: ['$pendingCount', 0] },
+                hasSuccessRequests: { $gt: ['$successCount', 0] }
+                // Add other fields as needed
+            }
+          }
     ])
     .then(data => {
         return res.json({message: "success", data: data})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}
+
+exports.requestadoptpet = (req, res) => {
+    const { userid, petid } = req.body
+
+    PetAdoptionRequest.create({requester: userid, pet: petid, status: "pending"})
+    .then(data => {
+        return res.json({message: "success"})
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
 }

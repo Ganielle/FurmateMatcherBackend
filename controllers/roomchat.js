@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose")
 const Roomchat = require("../models/Roomchat")
+const ChatHistory = require("../models/Chathistory")
 
 exports.createroom = (req, res) => {
     const { rescuerid, adopterid, roomname } = req.body
@@ -21,10 +22,33 @@ exports.createroom = (req, res) => {
 
 exports.listroomchats = (req, res) => {
     const { adopterid } = req.query
-    console.log(adopterid)
+
     Roomchat.find({participants: { $in: [adopterid]}})
     .then(data => {
         return res.json({message: "success", data: data})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
+}
+
+exports.roomchathistory = (req, res) => {
+    const { roomid } = req.query
+
+    ChatHistory.find({roomid: new mongoose.Types.ObjectId(roomid)})
+    .populate({
+        path: "sender roomid"
+    })
+    .then(data => {
+        return res.json({message: "success", data: data})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
+}
+
+exports.sendchat = (req, res) => {
+    const { roomid, userid, content } = req.body
+
+    ChatHistory.create({roomid: roomid, sender: userid, content: content})
+    .then(data => {
+        return res.json({message: "success"})
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message })) 
 }
