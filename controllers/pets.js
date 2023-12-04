@@ -298,3 +298,73 @@ exports.requestadoptpet = (req, res) => {
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
 }
+
+exports.adoptpetlist = (req, res) => {
+    const { userid } = req.query
+    const pageOptions = {
+        page: parseInt(req.query.page) || 0,
+        limit: parseInt(req.query.limit) || 10
+    }
+
+    PetAdoptionRequest.aggregate([
+        {
+            $lookup: {
+                from: "pets",
+                localField: "pet",
+                foreignField: "_id",
+                as: "petdata"
+            }
+        },
+        {
+            $lookup: {
+                from: "userdetails",
+                localField: "requester",
+                foreignField: "user",
+                as: "adopterdetails"
+            }
+        },
+        {
+            $unwind: "$adopterdetails"
+        },
+        {
+            $unwind: "$petdata"
+        },
+        {
+            $match: {
+                "petdata.owner": new mongoose.Types.ObjectId(userid),
+                "status": "pending"
+            }
+        },
+        {
+            $facet: {
+                data: [
+                    { $skip: pageOptions.page * pageOptions.limit },
+                    { $limit: pageOptions.limit }
+                ],
+                metadata: [
+                    { $count: "totalDocuments" }
+                ]
+            }
+        }
+    ])
+    .then(result => {
+        const totalDocuments = result[0].metadata[0] ? result[0].metadata[0].totalDocuments : 0;
+        const totalPages = Math.ceil(totalDocuments / pageOptions.limit);
+        return res.json({message: "success", data: result, pages: totalPages})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}
+
+exports.approverejectadopter = (req, res) => {
+    const { userid, status } = req.body
+
+    PetAdoptionRequest.findOneAndUpdate({requester: new mongoose.Types.ObjectId(userid)}, {status: status})
+    .then(data => {
+        Pets.findOneAndUpdate({_id: new mongoose.Types.ObjectId(data.pet)}, {adoptedby: new mongoose.Types.ObjectId(userid)})
+        .then(() => {
+            return res.json({message: "success"})
+        })
+        .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}

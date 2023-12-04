@@ -214,7 +214,8 @@ exports.userprofile = (req, res) => {
     .then(data => {
 
         PetPreference.findOne({owner: new mongoose.Types.ObjectId(id)})
-        .then(petdata => {
+        .then(async petdata => {
+
             let userprofiledata = {
                 petdata: petdata,
                 preference: data
