@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { createpets, petlistrescuer, listpetsadopter, listpetadoptercustomfilter, listpethomepage,likepet, likepetlist, petdetails, requestadoptpet, adoptpetlist, approverejectadopter, deletepet } = require("../controllers/pets")
+const { createpets, petlistrescuer, listpetsadopter, listpetadoptercustomfilter, listpethomepage,likepet, likepetlist, petdetails, requestadoptpet, adoptpetlist, approverejectadopter, deletepet, updatepet } = require("../controllers/pets")
 const upload = require("../middleware/uploadspic")
 
 const uploadimg = upload.single("file")
@@ -25,5 +25,14 @@ router
     .get("/adoptpetlist", adoptpetlist)
     .post("/approverejectadopter", approverejectadopter)
     .post("/deletepet", deletepet)
+    .post("/updatepet", function (req, res, next){
+        uploadimg(req, res, function(err) {
+            if (err){
+                return res.status(400).send({ message: "failed", data: err.message })
+            }
+
+            next()
+        })
+    }, updatepet)
 
 module.exports = router

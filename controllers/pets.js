@@ -413,16 +413,16 @@ exports.updatepet = async(req, res) => {
     let picture = ""
 
     const dataupdate = {
-        petname: petname,
-        type: type,
-        gender: gender,
-        breed: breed,
-        age: age,
-        personality: personality,
-        special: special,
-        maintenance: maintenance,
-        located: located,
-        description: description
+        "name": petname,
+        "type": type,
+        "gender": gender,
+        "breed": breed,
+        "age": age,
+        "personalitytraits": personality,
+        "special": special,
+        "maintenance": maintenance,
+        "located": located,
+        "description": description
     }
 
     if (req.file){
@@ -430,7 +430,7 @@ exports.updatepet = async(req, res) => {
         dataupdate["picture"] = picture
     }
 
-    Pets.findOneAndUpdate({_id: userid, owner: petid}, dataupdate)
+    Pets.findOneAndUpdate({_id: petid, owner: userid}, dataupdate)
     .then(data => {
         return res.json({message: "success"})
     })
