@@ -2,6 +2,10 @@ const mongoose = require("mongoose")
 
 const rescuerDetailsModels = new mongoose.Schema(
     {
+        owner: {
+            type: mongoose.Types.ObjectId,
+            ref: "Users"
+        },
         email: {
             type: String
         },

@@ -8,7 +8,12 @@ const petsModels = new mongoose.Schema(
         },
         adoptedby: {
             type: mongoose.Schema.Types.ObjectId,
+            ref: "Users",
             require: false
+        },
+        description: {
+            type: String,
+            default: ""
         },
         name: {
             type: String

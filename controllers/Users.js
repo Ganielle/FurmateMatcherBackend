@@ -124,12 +124,12 @@ exports.createuser = (req, res) => {
 exports.createrescuer = (req, res) => {
     const { username, password, email, street, municipality, province, country, zipcode, vision, mission, roleId } = req.body
 
-    RescuerDetails.findOne({ $or: [{username: username}, {email: email}] })
+    RescuerDetails.findOne({ $or: [{email: email}] })
     .then(data => {
         if (!data){
             Users.create({ roleId: roleId, username: username, password: password})
             .then(async user => {
-                await RescuerDetails.create({ email: email, street: street, municipality: municipality, province: province, country: country, zipcode: zipcode, vision: vision, mission: mission})
+                await RescuerDetails.create({ owner: new mongoose.Types.ObjectId(user._id), email: email, street: street, municipality: municipality, province: province, country: country, zipcode: zipcode, vision: vision, mission: mission})
 
                 const verificationId = nanoid(10)
                 EmailValidation.create({owner: user._id, token: verificationId, activated: false})

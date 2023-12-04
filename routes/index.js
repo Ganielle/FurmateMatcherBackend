@@ -7,6 +7,7 @@ const routes = app => {
     app.use("/emailverification", require("./emailvalidation"))
     app.use("/uploads", require('./picture'))
     app.use("/pets", require('./pets'))
+    app.use("/chat", require('./chat'))
 }
 
 module.exports = routes
