@@ -112,7 +112,7 @@ exports.listpetadoptercustomfilter = (req, res) => {
     const filtercriteria = {}
 
     Object.keys(filter).forEach(key => {
-        if (filter[key] !== ''){
+        if (filter[key] !== '' && filter[key] != 'any'){
             filtercriteria[key] = filter[key]
         }
     })
@@ -219,8 +219,8 @@ exports.petdetails = async (req,res) => {
         {
             $lookup: {
                 from: "userdetails",
-                localField: "user",
-                foreignField: 'adoptedby',
+                localField: "adoptedby",
+                foreignField: 'user',
                 as: 'adopterDetails'
             }
         },
@@ -267,6 +267,7 @@ exports.petdetails = async (req,res) => {
                   }
                 }
               },
+              
               data: { $first: '$$ROOT' }
             }
           },
