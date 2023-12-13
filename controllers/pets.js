@@ -4,6 +4,7 @@ const LikePets = require("../models/Likepets")
 const RescuerDetails = require("../models/Rescuerdetails")
 const UserDetails = require("../models/Userdetails")
 const PetAdoptionRequest = require("../models/Petadoptionrequest")
+const PetViewHistory = require("../models/Petviewhistory")
 const { default: mongoose } = require("mongoose")
 
 exports.createpets = (req, res) => {
@@ -434,6 +435,41 @@ exports.updatepet = async(req, res) => {
     Pets.findOneAndUpdate({_id: petid, owner: userid}, dataupdate)
     .then(data => {
         return res.json({message: "success"})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}
+
+exports.addhistoryviewpet = async(req, res) => {
+    const { userid, petid } = req.body
+
+    PetViewHistory.create({owner: new mongoose.Types.ObjectId(userid), pet: new mongoose.Types.ObjectId(petid)})
+    .then(data => {
+        return res.json({message: "success"})
+    })
+    .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
+}
+
+exports.viewhistorypet = async(req, res) => {
+    const { userid } = req.query;
+    const pageOptions = {
+        page: parseInt(req.query.page) || 0,
+        limit: parseInt(req.query.limit) || 10
+    }
+
+    PetViewHistory.find({owner: new mongoose.Types.ObjectId(userid)})
+    .skip(pageOptions.page * pageOptions.limit)
+    .limit(pageOptions.limit)
+    .sort({'createdAt': -1})
+    .populate({
+        path: "pet"
+    })
+    .then(data => {
+        PetViewHistory.countDocuments({owner: new mongoose.Types.ObjectId(userid)})
+        .then( count => {
+            const totalPages = Math.ceil(count / 10)
+            res.json({ message: "success", data: data, pages: totalPages })
+        })
+        .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
     })
     .catch(error => res.status(400).json({ message: "bad-request", data: error.message }))
 }

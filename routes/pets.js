@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { createpets, petlistrescuer, listpetsadopter, listpetadoptercustomfilter, listpethomepage,likepet, likepetlist, petdetails, requestadoptpet, adoptpetlist, approverejectadopter, deletepet, updatepet } = require("../controllers/pets")
+const { createpets, petlistrescuer, listpetsadopter, listpetadoptercustomfilter, listpethomepage,likepet, likepetlist, petdetails, requestadoptpet, adoptpetlist, approverejectadopter, deletepet, updatepet, addhistoryviewpet, viewhistorypet } = require("../controllers/pets")
 const upload = require("../middleware/uploadspic")
 
 const uploadimg = upload.single("file")
@@ -34,5 +34,7 @@ router
             next()
         })
     }, updatepet)
+    .post("/addhistoryviewpet", addhistoryviewpet)
+    .get("/viewhistorypet", viewhistorypet)
 
 module.exports = router
