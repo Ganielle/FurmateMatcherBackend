@@ -1,5 +1,5 @@
 const router = require("express").Router(),
-    { migrate } = require("../controllers/Migrate")
+    { migrate } = require("../controllers/migrate")
 
 router
     .post("/seed", migrate)
