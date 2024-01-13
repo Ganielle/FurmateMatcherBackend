@@ -13,7 +13,9 @@ const corsConfig = {
       "http://127.0.0.1:5173",
       "http://127.0.0.1:5173/",
       "http://localhost:5173/",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://furmatematcher.onrender.com",
+      "https://furmatematcher.onrender.com/"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"], // List only` available methods
     credentials: true, // Must be set to true
